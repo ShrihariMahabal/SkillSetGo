@@ -14,12 +14,6 @@ function Subtopics() {
   useEffect(() => {
     fetchSubtopics();
   }, []);
-  
-  useEffect(() => {
-    if (completed.length && completed.every(item => item)) {
-      updateModuleStatus();
-    }
-  }, [completed]);
 
   const fetchSubtopics = async () => {
     try {
@@ -43,6 +37,10 @@ function Subtopics() {
       const newCompleted = [...completed];
       newCompleted[index] = true;
       setCompleted(newCompleted);
+
+      if (newCompleted.every(item => item)) {
+        updateModuleStatus();
+      }
     } catch (error) {
       console.error(error);
     }
@@ -76,10 +74,8 @@ function Subtopics() {
     try {
       const modules = JSON.parse(localStorage.getItem("roadmap"));
       const currentModule = JSON.parse(localStorage.getItem("currentModule"));
-      // console.log(typeof(modules))
-      // console.log(typeof(currentModule))
       const nextModule = modules[currentModule + 1].module;
-      const subtopicNames =  modules[currentModule + 1].subtopics.map(subtopic => subtopic.subtopic);
+      const subtopicNames = modules[currentModule + 1].subtopics.map(subtopic => subtopic.subtopic);
 
       const response = await axios.post('http://127.0.0.1:5000/get_video', {
         module: nextModule,
