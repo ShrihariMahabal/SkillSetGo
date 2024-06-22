@@ -28,6 +28,7 @@ function ForumPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [communityData, setCommunityData] = useState({});
+  const [topRecommendations, setTopRecommendations] = useState([]);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const { communityId } = useParams();
   const navigate = useNavigate();
@@ -44,10 +45,13 @@ function ForumPage() {
     const response = await axios.get(
       `http://127.0.0.1:5000/get_doubts/${communityId}/${admin}`
     );
+    console.log(response.data.doubts)
     setDoubts(response.data.doubts);
     setCommentors(response.data.commentors);
     setIsLiked(response.data.isLiked);
     setCommunityData(response.data.communityData);
+    setTopRecommendations(response.data.top_recommendations); 
+    console.log(response.data.top_recommendations)
   };
 
   const handleAskDoubt = async () => {
@@ -142,8 +146,139 @@ function ForumPage() {
           New Post
         </button>
       </div>
+      <h3 className="text-purple1 text-xl font-mont font-bold mt-4">Recommendations for you</h3>
+      <div className="flex flex-col mt-3 mb-4">
+        {topRecommendations.map((top, index) => (
+          <Link
+            onClick={() => navigate(`/forum/${communityData._id}/${top._id}`)}
+            className="bg-gray-100 shadow-md mb-4 rounded-xl p-3 flex flex-col items-start relative hover:scale-105 transition-all cursor-pointer"
+            key={top._id}
+          >
+            {top.commentorId === admin && (
+              <Dropdown>
+                <DropdownTrigger>
+                  <button
+                    onClick={(event) => event.preventDefault()}
+                    className="absolute top-2 right-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      className="lucide lucide-ellipsis-vertical"
+                    >
+                      <circle cx="12" cy="12" r="1" />
+                      <circle cx="12" cy="5" r="1" />
+                      <circle cx="12" cy="19" r="1" />
+                    </svg>
+                  </button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Action event example"
+                  onAction={(key) => alert(key)}
+                >
+                  <DropdownItem
+                    onClick={(event) => handleDeleteDoubt(event, top._id)}
+                    key="delete"
+                    className="text-danger"
+                    color="danger"
+                  >
+                    Delete Doubt
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            )}
+            <div className="flex items-center">
+              <div className="bg-[#1E1A1D] text-white rounded-full h-7 w-7 flex justify-center items-center">
+                {commentors[index].charAt(0).toUpperCase()}
+              </div>
+              <p className="text-gray-700 ml-2 font-semibold text-sm font-mont">
+                {commentors[index]}
+              </p>
+            </div>
+            <h1 className="font-bold font-mont text-ellipsis mt-1 max-w-full text-wrap">
+              {top.commentHeading}
+            </h1>
+            <p className="max-w-full truncate text-sm text-gray-700">
+              {top.commentContent}
+            </p>
 
-      <div className="flex flex-col mt-5">
+            <div className="flex items-end">
+              <div className="flex items-center mt-2">
+                <button
+                  onClick={(event) =>
+                    isLiked[index]
+                      ? handleRemoveLike(event, index)
+                      : handleLike(event, index)
+                  }
+                  className="likeBtn h-8 w-8 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
+                >
+                  {isLiked[index] ? (
+                    <img src={ThumbsUp} alt="Liked" className="h-5 w-5" />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-thumbs-up h-5 w-5"
+                    >
+                      <path d="M7 10v12" />
+                      <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+                    </svg>
+                  )}
+                </button>
+
+                <div className="flex ml-[-0.6rem] h-7 w-7 p-1 justify-center items-center text-xs font-pop">
+                  {top.likes}
+                </div>
+              </div>
+
+              <div className="flex items-center ml-2">
+                <div
+                  onClick={() =>
+                    navigate(`/forum/${communityData._id}/${top._id}`)
+                  }
+                  className="h-7 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    className="lucide lucide-message-square-text h-5 w-5"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <path d="M13 8H7" />
+                    <path d="M17 12H7" />
+                  </svg>
+
+                  <p className="text-sm font-pop ml-1">View Replies</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <h3 className="text-purple1 text-xl font-mont font-bold">Explore all</h3>
+
+      <div className="flex flex-col mt-3">
         {doubts.map((doubt, index) => (
           <Link
             onClick={() => navigate(`/forum/${communityData._id}/${doubt._id}`)}

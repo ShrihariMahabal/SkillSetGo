@@ -9,10 +9,11 @@ import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from flask_cors import CORS
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import math
 from datetime import datetime, timedelta
-
+import numpy as np
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,7 +29,7 @@ app.secret_key = 'sk'
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-connection_string = 'mongodb+srv://shriharimahabal2:NObO44F5chwSglW7@cluster0.c0f3mdd.mongodb.net/'
+connection_string = 'mongodb://localhost:27017/'
 client = MongoClient(connection_string)
 db = client.get_database('ssg')
 
@@ -177,6 +178,23 @@ def get_doubts(community_id, user_id):
     comments = db.comments
     users = db.users
     communities = db.communities
+    video_data=db.videos
+    module_data = video_data.find_one({'userId': user_id})
+
+    if module_data:
+        moduleName = module_data.get('module', '')
+    isCompleted = module_data.get('isCompleted', [])
+    subtopics = module_data.get('subtopics', [])
+    most_recent_index = -1
+    for i in range(len(isCompleted)):
+        if isCompleted[i]:
+            most_recent_index = i
+
+    if most_recent_index >= 0 and most_recent_index < len(subtopics):
+        subtopic_name = subtopics[most_recent_index]
+    else:
+        subtopic_name = ''
+
     communityData = communities.find_one({'_id': ObjectId(community_id)})
     communityData['_id'] = str(communityData['_id'])
     doubts = list(comments.find({'communityId': community_id, 'parentId': None}))
@@ -190,12 +208,15 @@ def get_doubts(community_id, user_id):
         else:
             isLiked.append(False)
         commentors.append(commentor['username'])
+    top_recommendations = find_top_n_matching_communities(moduleName, subtopic_name, doubts, top_n=2)
+    print("hi",top_recommendations)
     if doubts:
-        return jsonify({'doubts': doubts, 'commentors': commentors, 'isLiked': isLiked, 'communityData': communityData}), 200
-    return jsonify({'message': 'No doubts found', 'communityData': communityData, 'doubts': []})
+        return jsonify({'doubts': doubts, 'commentors': commentors, 'isLiked': isLiked, 'communityData': communityData,
+            'top_recommendations': top_recommendations}), 200
+    return jsonify({'message': 'No doubts found', 'communityData': communityData, 'doubts': [],'top_recommendations': []})
 
 @app.route('/like_doubt', methods=['POST'])
-def like_doubt():
+def like_doubt():           
     data = request.json
     comments = db.comments
     userId = data['userId']
@@ -300,6 +321,21 @@ def mentor(user_id):
     recommended_mentors_json = recommended_mentors.to_dict('records')
     print(recommended_mentors_json)
     return jsonify(recommended_mentors_json)
+
+@app.route('/get_schedule/<string:user_id>',methods=['GET'])
+def schedule(user_id):
+    video_data=db.videos
+    module_data = video_data.find_one({'userId': user_id})
+    roadmap=db.roadmaps
+    roadmap_data = roadmap.find_one({'userId': user_id})
+    modules = roadmap_data.get('roadmap', {}).get('roadmap', [])
+    
+    if module_data:
+        moduleName = module_data.get('module', '')
+    print(moduleName)
+    matching_module = next((module for module in modules if module.get('name') == moduleName), None)
+    return jsonify(modules)
+
 
 mentors_df = pd.read_csv('extended_mentors.csv')
 @app.route('/mentorship/<int:mentor_id>')
