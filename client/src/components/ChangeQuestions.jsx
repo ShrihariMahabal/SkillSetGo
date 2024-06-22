@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function Questions() {
+function ChangeQuestions() {
   const navigate = useNavigate();
   const userId = JSON.parse(localStorage.getItem("user_creds"))._id;
   const [questions, setQuestions] = useState({
@@ -28,16 +28,16 @@ function Questions() {
     projects: "",
     prevExperience: "",
     studyDuration: 0,
+    academicSituation: "",
   });
 
   const [placementTime, setPlacementTime] = useState();
-  const [studyFrequency, setStudyFrequency] = useState();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(Array.from(selectedKeys)[0])
+    // console.log(Array.from(selectedKeys)[0]);
     if (
       !questions.currentYear ||
       !questions.jobRole ||
@@ -52,14 +52,15 @@ function Questions() {
       !questions.prevExperience ||
       !questions.studyDuration ||
       !placementTime ||
-      selectedKeys.size === 0
+      selectedKeys.size === 0 ||
+      !questions.academicSituation
     ) {
       console.log("All fields are required");
       return;
     }
     setLoading(true);
 
-    const response = await axios.post("http://127.0.0.1:5000/make_roadmap", {
+    const response = await axios.post("http://127.0.0.1:5000/change_roadmap", {
       userId: userId,
       currentYear: questions.currentYear,
       jobRole: questions.jobRole,
@@ -75,13 +76,12 @@ function Questions() {
       studyDuration: questions.studyDuration,
       placementTime: placementTime.toString(),
       currentDate: new Date().toString(),
-      prefStudyDays: Array.from(selectedKeys)
+      prefStudyDays: Array.from(selectedKeys),
+      academicSituation: questions.academicSituation,
     });
     console.log(response.data.message);
 
     const roadmapGen = await response.data.response;
-    localStorage.setItem("roadmap", JSON.stringify(roadmapGen.roadmap));
-    localStorage.setItem("currentModule", 0);
     const roadmap = roadmapGen.roadmap[0];
     console.log(roadmap);
     console.log(roadmap.subtopics[0].subtopic);
@@ -433,6 +433,31 @@ function Questions() {
                   </DropdownMenu>
                 </Dropdown>
               </div>
+              <div className="w-full col-span-2">
+                <label
+                  htmlFor="describe"
+                  className="w-full block text-sm font-medium text-gray-700"
+                >
+                  Describe your current academic situation
+                </label>
+                <Textarea
+                  id="describe"
+                  minRows={3}
+                  maxRows={3}
+                  variant="bordered"
+                  className="mt-1 w-full bg-white rounded-xl sm:text-sm"
+                  value={questions.academicSituation}
+                  onChange={(e) =>
+                    setQuestions((q) => ({
+                      ...q,
+                      academicSituation: e.target.value,
+                    }))
+                  }
+                  type="text"
+                  placeholder="Describe your current academic situation and any other relevant information"
+                  required
+                />
+              </div>
             </div>
           </div>
           <button
@@ -448,4 +473,4 @@ function Questions() {
   );
 }
 
-export default Questions;
+export default ChangeQuestions;

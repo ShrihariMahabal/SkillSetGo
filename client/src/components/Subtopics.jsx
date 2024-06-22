@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import { FaYoutube } from "react-icons/fa";
 import { Checkbox } from "@nextui-org/react";
 
@@ -11,17 +10,20 @@ function Subtopics() {
   const [subtopics, setSubtopics] = useState([]);
   const admin = JSON.parse(localStorage.getItem("user_creds"))._id;
   const [completed, setCompleted] = useState([]);
-
+  
   useEffect(() => {
     fetchSubtopics();
   }, []);
+  
+  useEffect(() => {
+    if (completed.length && completed.every(item => item)) {
+      updateModuleStatus();
+    }
+  }, [completed]);
 
   const fetchSubtopics = async () => {
     try {
-      const response = await axios.get(
-        `http://127.0.0.1:5000/get_subtopics/${moduleId}/${admin}`
-      );
-      console.log(response.data.subtopics);
+      const response = await axios.get(`http://127.0.0.1:5000/get_subtopics/${moduleId}/${admin}`);
       setModule(response.data.subtopics);
       setSubtopics(response.data.subtopics.subtopics);
       setCompleted(response.data.subtopics.isCompleted);
@@ -32,17 +34,12 @@ function Subtopics() {
 
   const handleTick = async (index) => {
     try {
-      const response = await axios.post(
-        `http://127.0.0.1:5000/complete_subtopic`,
-        {
-          moduleId: moduleId,
-          admin: admin,
-          subtopicIndex: index,
-          length: subtopics.length,
-        }
-      );
-      console.log(response.data.message);
-      // Update the local state
+      await axios.post(`http://127.0.0.1:5000/complete_subtopic`, {
+        moduleId: moduleId,
+        admin: admin,
+        subtopicIndex: index,
+        length: subtopics.length,
+      });
       const newCompleted = [...completed];
       newCompleted[index] = true;
       setCompleted(newCompleted);
@@ -53,17 +50,12 @@ function Subtopics() {
 
   const handleUnTick = async (index) => {
     try {
-      const response = await axios.post(
-        `http://127.0.0.1:5000/not_complete_subtopic`,
-        {
-          moduleId: moduleId,
-          admin: admin,
-          subtopicIndex: index,
-          length: subtopics.length,
-        }
-      );
-      console.log(response.data.message);
-      // Update the local state
+      await axios.post(`http://127.0.0.1:5000/not_complete_subtopic`, {
+        moduleId: moduleId,
+        admin: admin,
+        subtopicIndex: index,
+        length: subtopics.length,
+      });
       const newCompleted = [...completed];
       newCompleted[index] = false;
       setCompleted(newCompleted);
@@ -77,6 +69,27 @@ function Subtopics() {
       handleUnTick(index);
     } else {
       handleTick(index);
+    }
+  };
+
+  const updateModuleStatus = async () => {
+    try {
+      const modules = JSON.parse(localStorage.getItem("roadmap"));
+      const currentModule = JSON.parse(localStorage.getItem("currentModule"));
+      // console.log(typeof(modules))
+      // console.log(typeof(currentModule))
+      const nextModule = modules[currentModule + 1].module;
+      const subtopicNames =  modules[currentModule + 1].subtopics.map(subtopic => subtopic.subtopic);
+
+      const response = await axios.post('http://127.0.0.1:5000/get_video', {
+        module: nextModule,
+        subtopics: subtopicNames,
+        userId: admin,
+      });
+      localStorage.setItem("currentModule", currentModule + 1);
+      console.log(response.data.message);
+    } catch (error) {
+      console.error(error);
     }
   };
 

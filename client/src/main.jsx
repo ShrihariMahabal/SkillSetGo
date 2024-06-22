@@ -29,6 +29,8 @@ import Mentor from "./components/Mentor.jsx";
 import Courses from "./components/Courses.jsx";
 import Subtopics from "./components/Subtopics.jsx";
 import VideoPage from "./components/VideoPage.jsx";
+import Account1 from "./components/Account1.jsx";
+import ChangeQuestions from "./components/ChangeQuestions.jsx";
 // import Account from './components/Account.jsx'
 
 const router = createBrowserRouter(
@@ -37,9 +39,11 @@ const router = createBrowserRouter(
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/questions" element={<Questions />} />
+      <Route path="/changeQuestions" element={<ChangeQuestions />} />
       <Route path="/" element={<Layout />}>
         <Route path="" element={<Home />} />
         <Route path="chatbot" element={<Chatbot />} />
+        <Route path="account" element={<Account1 />} />
         <Route
           path="calendar"
           element={
