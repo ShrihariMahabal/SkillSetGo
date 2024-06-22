@@ -18,6 +18,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 from time import sleep
 import re
 import requests
@@ -29,7 +31,7 @@ app.secret_key = 'sk'
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-connection_string = 'mongodb://localhost:27017/'
+connection_string = 'mongodb+srv://shriharimahabal2:NObO44F5chwSglW7@cluster0.c0f3mdd.mongodb.net/'
 client = MongoClient(connection_string)
 db = client.get_database('ssg')
 
@@ -200,6 +202,7 @@ def get_doubts(community_id, user_id):
     doubts = list(comments.find({'communityId': community_id, 'parentId': None}))
     commentors = []
     isLiked = []
+    print(doubts)
     for doubt in doubts:
         doubt['_id'] = str(doubt['_id'])
         commentor = users.find_one({'_id': ObjectId(doubt['commentorId'])})
@@ -208,12 +211,25 @@ def get_doubts(community_id, user_id):
         else:
             isLiked.append(False)
         commentors.append(commentor['username'])
-    top_recommendations = find_top_n_matching_communities(moduleName, subtopic_name, doubts, top_n=2)
+    top_recommendations = find_top_n_matching_communities('Web development', 'React JS', doubts, top_n=3)
     print("hi",top_recommendations)
     if doubts:
         return jsonify({'doubts': doubts, 'commentors': commentors, 'isLiked': isLiked, 'communityData': communityData,
             'top_recommendations': top_recommendations}), 200
     return jsonify({'message': 'No doubts found', 'communityData': communityData, 'doubts': [],'top_recommendations': []})
+
+def find_top_n_matching_communities(module_name, subtopic_name, doubts, top_n=3):
+    query = module_name + ' ' + subtopic_name
+    doubt_headings = [doubt['commentHeading'] for doubt in doubts]
+    print(doubt_headings)
+    print("hi")
+    vectorizer = TfidfVectorizer().fit_transform([query] + doubt_headings)
+    vectors = vectorizer.toarray()
+    cosine_similarities = cosine_similarity(vectors[0:1], vectors[1:]).flatten()
+    top_n_indices = np.argsort(cosine_similarities)[-top_n:][::-1]
+
+    recommendations = [doubts[index] for index in top_n_indices]
+    return recommendations
 
 @app.route('/like_doubt', methods=['POST'])
 def like_doubt():           
@@ -383,6 +399,7 @@ def chatbot():
 @app.route('/make_roadmap', methods=['POST'])
 def get_roadmap():
     data = request.json
+    data['rating'] = 50
     roadmaps = db.roadmaps
     # prevRoadmap = db.prevRoadmap
     userData = db.userData
@@ -467,6 +484,8 @@ def get_roadmap():
     """
     
     response = chat_session.send_message(prompt)
+    
+    # responseAnalysis_text = responseAnalysis.text
     try:
         # Remove the "```json" and "```" markers from the response text
         cleaned_response_text = response.text.strip().strip("```json").strip("```")
@@ -482,7 +501,7 @@ def get_roadmap():
         # Insert the JSON object into the 'roadmaps' collection
         roadmaps.insert_one({'userId': data['userId'], 'roadmap': roadmap_json})
         
-        return jsonify({'response': roadmap_json, 'message': 'Roadmap generated and stored successfully'}), 200
+        return jsonify({'response': roadmap_json,'message': 'Roadmap generated and stored successfully'}), 200
     except json.JSONDecodeError:
         return jsonify({'message': 'Failed to decode JSON from response'}), 500
     except Exception as e:
@@ -545,6 +564,119 @@ def change_roadmap():
         return jsonify({'message': 'Failed to decode JSON from response'}), 500
     except Exception as e:
         return jsonify({'message': str(e)}), 500
+    
+    
+# @app.route('/generate_analysis', methods=['POST'])
+# def generate_analysis():
+#     data = request.json
+#     model = genai.GenerativeModel(
+#     model_name="gemini-1.5-pro",
+#     generation_config=generation_config,
+#     )
+#     current_date = data['currentDate']
+#     chat_session = model.start_chat(history=[])
+    
+#     prompt = f"""
+#         User Inputs:
+
+#         Current Year of Engineering: {data['currentYear']}
+#         Desired Job Role: {data['jobRole']}
+#         Preferred Industry: {data['industry']}
+#         Technology Interests: {data['techInterests']}
+#         Career Aspirations: {data['aspirations']}
+#         Academic Background:
+#         Field of study: {data['curFieldOfStudy']}
+#         GPA: {data['gpa']}
+#         Academic achievements: {data['achievements']}
+#         Coursework:
+#         Relevant courses: {data['coursework']}
+#         Projects: {data['projects']}
+#         Time of Campus Placement: {data['placementTime']}
+#         Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
+#         The following are the user inputs of an Indian engineering student studying in an Indian engineering college.
+# 	Compare the user's skills and knowledge to the requirements and expectations of their dream role to identify skill gaps and areas for improvement and then provide a detailed analysis of what the user lacks and atleast give 500 words.
+# 	Make sure that you don't give any action plan and address the user in first person only. Also give the answer in text format only no tables.
+#     """
+	
+#     response = chat_session.send_message(prompt)
+    
+@app.route('/analysis', methods=['POST'])
+def analysis():
+    data = request.json
+    model = genai.GenerativeModel(
+    model_name="gemini-1.5-pro",
+    generation_config=generation_config,
+    )
+    current_date = data['currentDate']
+    chat_session = model.start_chat(history=[])
+    prompt1 = f"""
+        User Inputs:
+
+        Current Year of Engineering: {data['currentYear']}
+        Desired Job Role: {data['jobRole']}
+        Preferred Industry: {data['industry']}
+        Technology Interests: {data['techInterests']}
+        Career Aspirations: {data['aspirations']}
+        Academic Background:
+        Field of study: {data['curFieldOfStudy']}
+        GPA: {data['gpa']}
+        Academic achievements: {data['achievements']}
+        Coursework:
+        Relevant courses: {data['coursework']}
+        Projects: {data['projects']}
+        Time of Campus Placement: {data['placementTime']}
+        Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
+        Base on this information first of all counsel the student on the placement timing that if they will actually be able to prepare for the role in the stipulated amount of time considering that today is {current_date}.
+	
+	1. The case is that if the placement date has already passed i.e. the placement date occurs before today's date {current_date} but only if this happens then you have to specifically start the output sentence with the words Invalid Date and then advise the user they should try out for the next placement season. The current date is {current_date} and placement date is {data['placementTime']}. Also don't give any ways as to how the user can pursue their desired role in the future as it will be done later on by so you don't even need to mention it. Also don't be diplomatic in giving your answers if you think it is not feasible then just say so
+	
+	2. The user's field of study is {data['curFieldOfStudy']}. If this field of study is anything unrelated to engineering then advise the user that since they are from a completely unrelated Field of Study they should pursue a more relevant career path to their area of study. Also don't give any ways as to how the user can pursue their desired role in the future as it will be done later on by another app so you don't have to mention it. Start the output with Unrelated Job Role compulsorily. Also don't be diplomatic in giving your answers if you think it is not feasible then just say so. Check for this case very carefully as this can be easy to miss, check twice for it.
+	
+	3. The next case is if the placement date is after the current date but is so close to today that getting adequately prepared for the desired job role based on the student's current state is not feasible then start the output with the words Insufficient Time then advise the user that it is not really feasible to be well prepared for their desired role by their placement date and also give a few reasons as to why it is not possible. Also don't give any ways as to how the user can pursue their desired role in the future as it will be done later on by another app so you don't even need to mention it. Also don't be diplomatic in giving your answers if you think it is not feasible then just say so
+	
+	4. If the student can achieve the desired job role till placement that they can prepare for the placement with adequate hard work and practice. Appreciate the user saying that they can achieve their goal by working dedicatedly
+	
+	A student can only fit one of the above 4 cases not more than one so figure out the most relevant one after examining each and every case for that student info thoroughly and give the output according to that case 
+        """
+        
+    response = chat_session.send_message(prompt1)
+    response_text = response.text
+    
+    if response_text.startswith('Invalid Date'):
+        return jsonify({'message': 'Invalid Date, Try for the next placement season'})
+    elif response_text.startswith('Unrelated Job Role'):
+        return jsonify({'message': 'Unrelated Job Role, Pursue a more relevant career path to your area of study'})
+    elif response_text.startswith('Insufficient Time'):
+        return jsonify({'message': 'Insufficient Time, Not feasible to be well prepared for your desired role by your placement date'})
+    else:
+        prompt = f"""
+        User Inputs:
+
+        Current Year of Engineering: {data['currentYear']}
+        Desired Job Role: {data['jobRole']}
+        Preferred Industry: {data['industry']}
+        Technology Interests: {data['techInterests']}
+        Career Aspirations: {data['aspirations']}
+        Academic Background:
+        Field of study: {data['curFieldOfStudy']}
+        GPA: {data['gpa']}
+        Academic achievements: {data['achievements']}
+        Coursework:
+        Relevant courses: {data['coursework']}
+        Projects: {data['projects']}
+        Time of Campus Placement: {data['placementTime']}
+        Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
+        
+        The following are the user inputs of an Indian engineering student studying in an Indian engineering college.
+        Compare the user's skills and knowledge to the requirements and expectations of their dream role to identify skill gaps and areas for improvement and then provide a detailed analysis of what the user lacks and atleast give 400 words.
+        Make sure that you don't give any action plan. Also give the answer in text format only no tables.
+        """
+        response1 = chat_session.send_message(prompt)
+        response1_text = response1.text
+
+        responseAnalysis = chat_session.send_message(prompt)
+        return jsonify({'message': responseAnalysis.text}), 200
+        
     
 @app.route('/get_roadmap/<string:user_id>', methods=['GET'])
 def get_roadmap_data(user_id):
@@ -852,6 +984,75 @@ def not_complete_subtopic():
         "$inc": {'progress': -val}
     })
     return jsonify({'message': 'Subtopic not completed successfully'}), 200
+
+
+def scrape_indeed(job_title, location):
+    # Initialize the WebDriver
+    options = Options()
+    options.add_argument('--headless')
+    driver = webdriver.Chrome()
+    try:
+        # Construct the search URL
+        url = f"https://in.indeed.com/jobs?q={job_title.replace(' ', '+')}&l={location.replace(' ', '+')}&from=searchOnHP"
+        #url = f"https://www.naukri.com/{job_title.replace(' ', '-')}-jobs-in-{location.replace(' ', '-')}"
+        print(url)
+        driver.get(url)
+
+        # Wait until job listings are loaded
+        job_cards = WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.job_seen_beacon'))
+        )
+
+        jobs = []
+
+        # Loop through job cards and extract required information
+        for card in job_cards:
+            try:
+                title_element = card.find_element(By.CSS_SELECTOR, '.jcs-JobTitle.css-jspxzf.eu4oa1w0')
+                title = title_element.text
+                link = title_element.get_attribute('href')
+
+                company = card.find_element(By.CSS_SELECTOR, '.css-1qv0295.e37uo190').text
+                location = card.find_element(By.CSS_SELECTOR, '.css-1p0sjhy.eu4oa1w0').text
+
+                job = {
+                    'title': title,
+                    'company': company,
+                    'location': location,
+                    'link': link
+                }
+                jobs.append(job)
+            except Exception as e:
+                print(f"Error extracting data from job card: {e}")
+
+        return jobs
+
+    except TimeoutException as ex:
+        print(f"Timeout waiting for job listings: {ex}")
+        return []  # Return empty list if timeout occurs
+
+    finally:
+        driver.quit()  # Close the browser
+
+
+def display_jobs(job, location):
+    # Run the scraping function and print the results
+    jobs = scrape_indeed(job, location)
+    max_jobs = 10 if len(jobs) > 10 else len(jobs)
+    return jobs[:max_jobs]
+
+
+def display_internships(job, location):
+    jobs = scrape_indeed(f'{job} Intern', location)
+    max_jobs = 10 if len(jobs) > 10 else len(jobs)
+    return jobs[:max_jobs]
+
+@app.route('/job_listing', methods=['GET'])
+def job_listing():
+    user=db.users
+    internships=display_internships('Web Developer', 'Mumbai, Maharashtra')
+    jobs=display_jobs('Web Developer', 'Mumbai, Maharashtra')
+    return jsonify({'internships':internships,'jobs':jobs})
 
 if __name__ == '__main__':
     app.run(debug=True)

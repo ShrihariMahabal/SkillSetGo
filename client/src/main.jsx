@@ -32,6 +32,7 @@ import VideoPage from "./components/VideoPage.jsx";
 import Account1 from "./components/Account1.jsx";
 import ChangeQuestions from "./components/ChangeQuestions.jsx";
 import Quiz from "./components/Quiz.jsx";
+import Jobs from "./components/Jobs.jsx";
 // import Account from './components/Account.jsx'
 
 const router = createBrowserRouter(
@@ -41,6 +42,19 @@ const router = createBrowserRouter(
       <Route path="/register" element={<Register />} />
       <Route path="/questions" element={<Questions />} />
       <Route path="/changeQuestions" element={<ChangeQuestions />} />
+      <Route path="/jobs" element={
+            <div
+              style={{
+                height: "100vh",
+                width: "80%",
+                marginLeft: "20%",
+                padding: "1.25rem",
+                background: "white",
+              }}
+            >
+              <Jobs />
+            </div>
+          } />
       <Route path="/" element={<Layout />}>
         <Route path="" element={<Home />} />
         <Route path="chatbot" element={<Chatbot />} />

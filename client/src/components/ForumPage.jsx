@@ -45,7 +45,6 @@ function ForumPage() {
     const response = await axios.get(
       `http://127.0.0.1:5000/get_doubts/${communityId}/${admin}`
     );
-    console.log(response.data.doubts)
     setDoubts(response.data.doubts);
     setCommentors(response.data.commentors);
     setIsLiked(response.data.isLiked);
@@ -78,7 +77,7 @@ function ForumPage() {
     event.preventDefault();
     try {
       const response = await axios.delete(
-        `http://127.0.0.1:5000/delete_comment/${doubtId}`
+        'http://127.0.0.1:5000/delete_comment/${doubtId}'
       );
       if (response.status === 200) {
         fetchDoubts();
@@ -248,7 +247,7 @@ function ForumPage() {
               <div className="flex items-center ml-2">
                 <div
                   onClick={() =>
-                    navigate(`/forum/${communityData._id}/${top._id}`)
+                    navigate(/forum/${communityData._id}/${top._id})
                   }
                   className="h-7 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
                 >
@@ -281,7 +280,7 @@ function ForumPage() {
       <div className="flex flex-col mt-3">
         {doubts.map((doubt, index) => (
           <Link
-            onClick={() => navigate(`/forum/${communityData._id}/${doubt._id}`)}
+            onClick={() => navigate(/forum/${communityData._id}/${doubt._id})}
             className="bg-gray-100 shadow-md mb-4 rounded-xl p-3 flex flex-col items-start relative hover:scale-105 transition-all cursor-pointer"
             key={doubt._id}
           >
@@ -379,7 +378,7 @@ function ForumPage() {
               <div className="flex items-center ml-2">
                 <div
                   onClick={() =>
-                    navigate(`/forum/${communityData._id}/${doubt._id}`)
+                    navigate(/forum/${communityData._id}/${doubt._id})
                   }
                   className="h-7 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
                 >

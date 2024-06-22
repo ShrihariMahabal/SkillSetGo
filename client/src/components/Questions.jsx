@@ -34,6 +34,7 @@ function Questions() {
   const [studyFrequency, setStudyFrequency] = useState();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gap, setGap] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,7 +60,7 @@ function Questions() {
     }
     setLoading(true);
 
-    const response = await axios.post("http://127.0.0.1:5000/make_roadmap", {
+    const responseAnalysis = await axios.post("http://127.0.0.1:5000/analysis", {
       userId: userId,
       currentYear: questions.currentYear,
       jobRole: questions.jobRole,
@@ -77,8 +78,33 @@ function Questions() {
       currentDate: new Date().toString(),
       prefStudyDays: Array.from(selectedKeys)
     });
-    console.log(response.data.message);
+    console.log(responseAnalysis.data.message);
+    if (responseAnalysis.data.message == 'Invalid Date' || responseAnalysis.data.message == 'Unrelated Job Role' || responseAnalysis.data.message == 'Insufficient Time') {
+      setError(responseAnalysis.data.message);
+      return;
+    }
+    setGap(responseAnalysis.data.message);
 
+    const response = await axios.post('http://127.0.0.1:5000/make_roadmap', {
+      userId: userId,
+      currentYear: questions.currentYear,
+      jobRole: questions.jobRole,
+      industry: questions.industry,
+      techInterests: questions.techInterests,
+      aspirations: questions.aspirations,
+      curFieldOfStudy: questions.curFieldOfStudy,
+      gpa: questions.gpa,
+      achievements: questions.achievements,
+      coursework: questions.coursework,
+      projects: questions.projects,
+      prevExperience: questions.prevExperience,
+      studyDuration: questions.studyDuration,
+      placementTime: placementTime.toString(),
+      currentDate: new Date().toString(),
+      prefStudyDays: Array.from(selectedKeys)
+    });
+
+    console.log(response.data.message);
     const roadmapGen = await response.data.response;
     localStorage.setItem("roadmap", JSON.stringify(roadmapGen.roadmap));
     localStorage.setItem("currentModule", 0);
@@ -128,6 +154,20 @@ function Questions() {
           />
         </div>
       )}
+      {
+        error && (
+          <div className="fixed top-0 left-0 w-full h-full bg-white z-50 flex flex-col justify-center items-center">
+            <p className="font-mont text-2xl max-w-[60%] font-semibold">Error: {error}</p>
+          </div>
+        )
+      }
+      {
+        gap && (
+          <div className="fixed top-0 left-0 w-full min-h-full bg-white z-50 flex flex-col justify-center items-center">
+            <p className="font-mont text-sm max-w-[60%] font-semibold">{gap}</p>
+          </div>
+        )
+      }
       <div className="w-[100%] min-h-[100%] bg-white">
         <div className="flex flex-col items-start p-5 w-[100%] font-mont">
           <h1 className="text-3xl font-bold text-purple1 self-center">
