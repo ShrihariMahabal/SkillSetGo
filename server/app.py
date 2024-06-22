@@ -25,6 +25,12 @@ import re
 import requests
 from datetime import timedelta
 from flask_socketio import SocketIO
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import math
+from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.secret_key = 'sk'
@@ -41,7 +47,53 @@ userResp = ''
 def preprocess_data_mentors(df, role_column):
     df[role_column] = df[role_column].fillna('').str.lower().str.replace(' ', '_')
     return df
+def sch(days_of_week, module_time, subtopics, subtopic_time, start_day):
+    no_of_days = len(days_of_week) * module_time
+    hours_day = sum(subtopic_time) / no_of_days
+    schedule = []
+    remaining_time = 0
+    t = days_of_week.index(start_day)
+    z = 0
+    for subtopic in subtopic_time:
+        t = t % len(days_of_week)
+        if t == 0:
+            schedule.append((subtopics[z], remaining_time / 60, days_of_week[-1]))
+        else:
+            schedule.append((subtopics[z], remaining_time / 60, days_of_week[t - 1]))
 
+        no_of_days_sub = (subtopic - remaining_time) / hours_day
+        extra_time = (subtopic - remaining_time) % hours_day
+        remaining_time = hours_day - extra_time
+        for i in range(math.ceil(no_of_days_sub) - 1):
+            schedule.append((subtopics[z], hours_day / 60, days_of_week[t]))
+            t = (t + 1) % len(days_of_week)
+        schedule.append((subtopics[z], extra_time / 60, days_of_week[t]))
+        t += 1
+        z += 1
+
+    return schedule[1:-1], days_of_week[t - 1]
+
+def add_actual_dates(start_date, days_of_week, schedule):
+    current_date = datetime.strptime(start_date, "%Y-%m-%d")
+    day_name_to_index = {day: i for i, day in enumerate(days_of_week)}
+
+    actual_schedule = []
+    last_date = None
+
+    for entry in schedule:
+        topic, hours, day_name = entry
+        target_weekday = day_name_to_index[day_name]
+        if last_date and last_date.weekday() == target_weekday:
+            current_date = last_date
+        else:
+            while current_date.weekday() != target_weekday:
+                current_date += timedelta(days=1)
+
+        actual_schedule.append((topic, hours, day_name, current_date.strftime("%Y-%m-%d")))
+        last_date = current_date
+        current_date += timedelta(days=1)
+
+    return actual_schedule
 def load_data():
     mentors = pd.read_csv('extended_mentors.csv')
     mentors = preprocess_data_mentors(mentors, 'current_position')
@@ -338,19 +390,50 @@ def mentor(user_id):
     print(recommended_mentors_json)
     return jsonify(recommended_mentors_json)
 
-@app.route('/get_schedule/<string:user_id>',methods=['GET'])
+
+@app.route('/get_schedule/<string:user_id>', methods=['GET'])
 def schedule(user_id):
-    video_data=db.videos
-    module_data = video_data.find_one({'userId': user_id})
+    video_data = db.videos
     roadmap=db.roadmaps
     roadmap_data = roadmap.find_one({'userId': user_id})
-    modules = roadmap_data.get('roadmap', {}).get('roadmap', [])
+    data1=roadmap_data['roadmap']['roadmap'][0]['module']
+
+
+    user_videos = list(video_data.find({'userId': user_id}).sort('progress', 1))
+    previous_progress = 1
+    data = {}
+    for video in user_videos:
+        if previous_progress == 1 and video['progress'] == 0:
+            video['_id'] = str(video['_id'])
+            data = video
+            break  
+        previous_progress = video['progress']
+    subtopic_data_diff=[]
+    subtopic_data=[]
+    weeks_duration=0
+    for i in range(len(roadmap_data['roadmap']['roadmap'])):
+        if roadmap_data['roadmap']['roadmap'][i]['module']==data['module']:
+            data2=roadmap_data['roadmap']['roadmap'][i]['subtopics']
+            weeks_duration=roadmap_data['roadmap']['roadmap'][i]['duration_weeks']
+            for i in range(len(data2)):
+                subtopic_data.append(data2[i]['subtopic'])
+                subtopic_data_diff.append(data2[i]['difficulty_level'])
+    video_data_dur=video_data.find({'module':data['module']})
+    print(video_data_dur[0]['video_data'])
     
-    if module_data:
-        moduleName = module_data.get('module', '')
-    print(moduleName)
-    matching_module = next((module for module in modules if module.get('name') == moduleName), None)
-    return jsonify(modules)
+    duration=[]
+    for i in range(len(video_data_dur[0]['video_data'])):
+        duration.append(video_data_dur[0]['video_data'][i][3])
+    total_minutes = [int(h) * 60 + int(m) + int(s) / 60 for h, m, s in (time.split(':') for time in duration)]
+    prediction=predictions(total_minutes,subtopic_data_diff)
+    print(weeks_duration)
+    print(subtopic_data)
+    print(total_minutes)
+    schedule, end_day = sch(['mon', 'wed', 'fri','sun'], weeks_duration, subtopic_data, total_minutes, 'wed')
+    actual_schedule = add_actual_dates('2024-06-11', ['mon', 'wed', 'fri', 'sun'], schedule)
+    actual_schedule = [[subtopic, duration, date] for subtopic, duration, day, date in actual_schedule]
+    print(actual_schedule)
+    return jsonify(actual_schedule)
 
 
 mentors_df = pd.read_csv('extended_mentors.csv')
@@ -371,7 +454,13 @@ def assign_mentor():
     return jsonify({
         'message': 'Mentor assigned successfully'
     }), 200
+
+# @app.route('/get_rating', methods=['GET'])
+# def rating():
+
     
+
+
 @app.route('/get_mentor/<string:userId>', methods=['GET'])
 def get_mentor_data(userId):
     mentors = db.mentors
