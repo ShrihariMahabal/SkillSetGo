@@ -78,7 +78,7 @@ const RoadmapMain = () => {
             id: `e-${uuidv4()}`,
             source: sourceId,
             target: nodeId,
-            animated: false,
+            animated: true,
             type: 'smoothstep',
             style: { stroke: "#1f2937", strokeWidth: 4, strokeDasharray: "0,0" },
           });
@@ -105,7 +105,7 @@ const RoadmapMain = () => {
           target: projectId,
           sourceHandle: "right",
           targetHandle: "left",
-          // animated: true,
+          animated: true,
           type: 'smoothstep',
           style: { stroke: "#1f2937", strokeWidth: 4, strokeDasharray: "0,0" },
         });
@@ -119,7 +119,7 @@ const RoadmapMain = () => {
           source: projectId,
           target: nextModuleFirstSubtopicId,
           sourceHandle: "right",
-          // animated: true,
+          animated: true,
           type: 'smoothstep',
           style: { stroke: "#1f2937", strokeWidth: 4, strokeDasharray: "0,0" },
         });
