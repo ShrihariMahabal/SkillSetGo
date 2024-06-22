@@ -80,7 +80,8 @@ function ChangeQuestions() {
       academicSituation: questions.academicSituation,
     });
     console.log(response.data.message);
-
+    localStorage.setItem("roadmap", JSON.stringify(response.data.response.roadmap));
+    localStorage.setItem("currentModule", 0);
     const roadmapGen = await response.data.response;
     const roadmap = roadmapGen.roadmap[0];
     console.log(roadmap);

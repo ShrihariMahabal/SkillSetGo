@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { FaYoutube } from "react-icons/fa";
 import { Checkbox } from "@nextui-org/react";
+import Quiz from "../assets/quiz.png";
 
 function Subtopics() {
   const { moduleId } = useParams();
@@ -10,14 +11,16 @@ function Subtopics() {
   const [subtopics, setSubtopics] = useState([]);
   const admin = JSON.parse(localStorage.getItem("user_creds"))._id;
   const [completed, setCompleted] = useState([]);
-  
+
   useEffect(() => {
     fetchSubtopics();
   }, []);
 
   const fetchSubtopics = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:5000/get_subtopics/${moduleId}/${admin}`);
+      const response = await axios.get(
+        `http://127.0.0.1:5000/get_subtopics/${moduleId}/${admin}`
+      );
       setModule(response.data.subtopics);
       setSubtopics(response.data.subtopics.subtopics);
       setCompleted(response.data.subtopics.isCompleted);
@@ -38,7 +41,7 @@ function Subtopics() {
       newCompleted[index] = true;
       setCompleted(newCompleted);
 
-      if (newCompleted.every(item => item)) {
+      if (newCompleted.every((item) => item)) {
         updateModuleStatus();
       }
     } catch (error) {
@@ -75,9 +78,11 @@ function Subtopics() {
       const modules = JSON.parse(localStorage.getItem("roadmap"));
       const currentModule = JSON.parse(localStorage.getItem("currentModule"));
       const nextModule = modules[currentModule + 1].module;
-      const subtopicNames = modules[currentModule + 1].subtopics.map(subtopic => subtopic.subtopic);
+      const subtopicNames = modules[currentModule + 1].subtopics.map(
+        (subtopic) => subtopic.subtopic
+      );
 
-      const response = await axios.post('http://127.0.0.1:5000/get_video', {
+      const response = await axios.post("http://127.0.0.1:5000/get_video", {
         module: nextModule,
         subtopics: subtopicNames,
         userId: admin,
@@ -108,31 +113,49 @@ function Subtopics() {
         </div>
 
         {subtopics.map((subtopic, index) => (
-          <Link
-            to={`/courses/${moduleId}/${index}`}
-            key={index}
-            className="p-3 mt-4 font-mont w-full bg-white shadow-lg rounded-lg h-[5rem] flex justify-between items-center hover:bg-gray-50 hover:scale-[1.02] transition-all"
-          >
-            <div className="flex justify-between items-center">
-              <FaYoutube size={24} />
-              <div className="flex flex-col ml-4">
-                <p className="text-sm text-gray-500 font-semibold">
-                  Lecture {index + 1}
-                </p>
-                <p className="font-semibold font-mont text-lg text-black leading-tight mt-1">
-                  {subtopic}
-                </p>
+          <>
+            <Link
+              to={`/courses/${moduleId}/${index}`}
+              key={index}
+              className="p-3 mt-4 font-mont w-full bg-white shadow-lg rounded-lg h-[5rem] flex justify-between items-center hover:bg-gray-50 hover:scale-[1.02] transition-all"
+            >
+              <div className="flex justify-between items-center">
+                <FaYoutube size={24} />
+                <div className="flex flex-col ml-4">
+                  <p className="text-sm text-gray-500 font-semibold">
+                    Lecture {index + 1}
+                  </p>
+                  <p className="font-semibold font-mont text-lg text-black leading-tight mt-1">
+                    {subtopic}
+                  </p>
+                </div>
               </div>
-            </div>
-            <Checkbox
-              isSelected={completed[index]}
-              onChange={() => handleChange(index)}
-              className="mr-2"
-              size="lg"
-              color="default"
-            ></Checkbox>
-          </Link>
+              <Checkbox
+                isSelected={completed[index]}
+                onChange={() => handleChange(index)}
+                className="mr-2"
+                size="lg"
+                color="default"
+              ></Checkbox>
+            </Link>
+          </>
         ))}
+        <Link
+          to={`/quiz/${moduleId}`}
+          className="p-3 mt-4 font-mont w-full bg-white shadow-lg rounded-lg h-[5rem] flex justify-between items-center hover:bg-gray-50 hover:scale-[1.02] transition-all"
+        >
+          <div className="flex justify-between items-center">
+            <img src={Quiz} className="h-[1.8rem]" alt="" />
+            <div className="flex flex-col ml-4">
+              <p className="text-sm text-gray-500 font-semibold">
+                Test
+              </p>
+              <p className="font-semibold font-mont text-lg text-black leading-tight mt-1">
+                Take Test
+              </p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );
