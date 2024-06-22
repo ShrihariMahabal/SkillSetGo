@@ -28,6 +28,9 @@ connection_string = 'mongodb+srv://shriharimahabal2:NObO44F5chwSglW7@cluster0.c0
 client = MongoClient(connection_string)
 db = client.get_database('ssg')
 
+# modelResp = ''
+# userResp = ''
+
 def preprocess_data_mentors(df, role_column):
     df[role_column] = df[role_column].fillna('').str.lower().str.replace(' ', '_')
     return df
@@ -341,6 +344,7 @@ def chatbot():
 def get_roadmap():
     data = request.json
     roadmaps = db.roadmaps
+    # prevRoadmap = db.prevRoadmap
     userData = db.userData
     userData.insert_one(data)
     model = genai.GenerativeModel(
@@ -426,6 +430,8 @@ def get_roadmap():
     try:
         # Remove the "```json" and "```" markers from the response text
         cleaned_response_text = response.text.strip().strip("```json").strip("```")
+        modelResp = response
+        userResp = prompt
         
         # Parse the cleaned response text to a JSON object
         roadmap_json = json.loads(cleaned_response_text)
@@ -438,6 +444,64 @@ def get_roadmap():
         return jsonify({'message': 'Failed to decode JSON from response'}), 500
     except Exception as e:
         return jsonify({'message': str(e)}), 500
+    
+# @app.route('/change_roadmap', methods=['POST'])
+# def change_roadmap():
+#     data = request.json
+#     roadmaps = db.roadmaps
+#     userData = db.userData
+#     userData.update_one({'userId': data['userId']}, {'$set': data})
+#     model = genai.GenerativeModel(
+#     model_name="gemini-1.5-pro",
+#     generation_config=generation_config,
+#     )
+#     current_date = data['currentDate']
+#     chat_session = model.start_chat(history=[])
+#     prompt = f"""
+# 	User Inputs:
+#     I previously asked you this:
+#     {user}
+#     For this question, you answered:
+#     {model}
+# 	Current Year of Engineering: {data['currentYear']}
+# 	Desired Job Role: {data['jobRole']}
+# 	Preferred Industry: {data['industry']}
+#     Technology Interests: {data['techInterests']}
+# 	Career Aspirations: {data['aspirations']}
+#     Academic Background:
+#     Field of study: {data['curFieldOfStudy']}
+#     GPA: {data['gpa']}
+#     Academic achievements: {data['achievements']}
+#     Coursework:
+#     Relevant courses: {data['coursework']}
+#     Projects: {data['projects']}
+#     Time of Campus Placement: {data['placementTime']}
+#     Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
+#     Length of Each Study Session: {data['studyDuration']}
+# 	Current Date: {data['currentDate']}
+# 	User's current state and wishes: {data['academicSituation']}
+	
+# 	The user has now changed his career goals and preferences. Take into account the above changes and the User's current state and wishes and suggest a new roadmap to follow this. This time it is not necessary that the user wants to pursue a tech role. There may be cases where the user may have come across new career opportunities and want to pursue a non-tech role so accordingly suggest a career path based on the user's wishes and new set of inputs. If the user has opted for non-tech roles then there may not be a need to add the project section in each module so remove that from the output. If the role is a tech role then keep the output format as is. Make sure that the output only contains the new roadmap in json and nothing else.
+# 	"""
+#     response = chat_session.send_message(prompt)
+#     try:
+#         # Remove the "```json" and "```" markers from the response text
+#         cleaned_response_text = response.text.strip().strip("```json").strip("```")
+        
+#         # Parse the cleaned response text to a JSON object
+#         roadmap_json = json.loads(cleaned_response_text)
+        
+#         # Insert the JSON object into the 'roadmaps' collection
+#         roadmaps.update_one({'userId': data['userId']}, {'$set': {'roadmap': roadmap_json}})     
+#         mentors=db.mentors
+#         mentors.delete_one({'studentId': data['userId']})  
+#         videos=db.videos
+#         videos.delete_one({'userId': data['userId']})
+#         return jsonify({'response': roadmap_json, 'message': 'Roadmap generated and changed successfully'}), 200
+#     except json.JSONDecodeError:
+#         return jsonify({'message': 'Failed to decode JSON from response'}), 500
+#     except Exception as e:
+#         return jsonify({'message': str(e)}), 500
     
 @app.route('/get_roadmap/<string:user_id>', methods=['GET'])
 def get_roadmap_data(user_id):
@@ -496,52 +560,35 @@ def check_query(module, subtopic):
     {subtopic} is a subtopic of the course {module}. Will searching just the subtopic name through youtube yield an appropriate result or should I add the course name to the subtopic in the search. Give me a yes or no answer only. 0 is no 1 is yes
     """
     flag = model.generate_content(prompt)
-    return int(flag.text)
+    return int(flag.text.strip())
 
 def retrieve_videos(search_query):
     driver.get("https://www.youtube.com")
-
     search_box = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, 'input#search'))
     )
-    print("Search box is present in the DOM.")
-
     search_box.send_keys(search_query)
-    print("Sent keys to the search box.")
-
     search_box.submit()
-    print("Submitted the search form.")
-
     sleep(3)
-
     videos = WebDriverWait(driver, 10).until(
         EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'a#video-title'))
     )
-    print("Video elements are present in the DOM.")
-
-    print(len(videos))
-
     video_links = [video.get_attribute('href') for video in videos]
-
     return video_links
 
 def get_video_id(youtube_url):
-    # Extract video ID from URL
     video_id = re.search(r"(?<=v=)[^&]+", youtube_url)
     if not video_id:
         video_id = re.search(r"(?<=be/)[^&]+", youtube_url)
     return video_id.group(0) if video_id else None
 
 def get_video_duration(api_key, video_id):
-    # Make the API request to get video details
     url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&part=contentDetails&key={api_key}"
     response = requests.get(url).json()
     duration = response['items'][0]['contentDetails']['duration']
-    # Parse the ISO 8601 duration
     return parse_duration(duration)
 
 def parse_duration(duration):
-    # Parse the ISO 8601 duration to a timedelta object
     match = re.match(r'PT((?P<hours>\d+)H)?((?P<minutes>\d+)M)?((?P<seconds>\d+)S)?', duration)
     if not match:
         return None
@@ -552,13 +599,20 @@ def parse_duration(duration):
 @app.route('/get_video', methods=['POST'])
 def main():
     data = request.json
+    userId = data['userId']
     module = data['module']
     subtopics = data['subtopics']
+
+    # Check if videos for this module and user already exist
+    existing_videos = db.videos.find_one({'userId': userId, 'module': module})
+    if existing_videos:
+        return jsonify({'message': 'Videos for this module have already been generated'}), 200
+
     video_data = []
     for subtopic in subtopics:
         flag = check_query(module, subtopic)
         if flag == 0:
-            video_links = retrieve_videos(module + subtopic)
+            video_links = retrieve_videos(module + " " + subtopic)
         else:
             video_links = retrieve_videos(subtopic)
 
@@ -584,13 +638,21 @@ def main():
             video_data.append(longest_video)
         else:
             return jsonify({'message': 'No suitable video found'}), 404
-        
-    isCompleted = []
-    for i in subtopics:
-        isCompleted.append(False)
+
+    isCompleted = [False] * len(subtopics)
     videos = db.videos
-    videos.insert_one({'userId': data['userId'], 'module': module, 'subtopics': subtopics, 'video_data': video_data, 'isCompleted': isCompleted, 'progress': 0})
+    videos.insert_one({
+        'userId': userId,
+        'module': module,
+        'subtopics': subtopics,
+        'video_data': video_data,
+        'isCompleted': isCompleted,
+        'progress': 0
+    })
     return jsonify({'message': 'Videos retrieved and stored successfully'}), 200
+
+# @app.route('/get_next_module/<string:userId>', methods=['GET'])
+
 
 @app.route('/fetch_modules/<string:user_id>', methods=['GET'])
 def fetch_videos(user_id):
