@@ -32,8 +32,8 @@ connection_string = 'mongodb+srv://shriharimahabal2:NObO44F5chwSglW7@cluster0.c0
 client = MongoClient(connection_string)
 db = client.get_database('ssg')
 
-# modelResp = ''
-# userResp = ''
+modelResp = ''
+userResp = ''
 
 def preprocess_data_mentors(df, role_column):
     df[role_column] = df[role_column].fillna('').str.lower().str.replace(' ', '_')
@@ -434,7 +434,10 @@ def get_roadmap():
     try:
         # Remove the "```json" and "```" markers from the response text
         cleaned_response_text = response.text.strip().strip("```json").strip("```")
-        modelResp = response
+        global modelResp
+        modelResp = cleaned_response_text
+        
+        global userResp
         userResp = prompt
         
         # Parse the cleaned response text to a JSON object
@@ -449,63 +452,63 @@ def get_roadmap():
     except Exception as e:
         return jsonify({'message': str(e)}), 500
     
-# @app.route('/change_roadmap', methods=['POST'])
-# def change_roadmap():
-#     data = request.json
-#     roadmaps = db.roadmaps
-#     userData = db.userData
-#     userData.update_one({'userId': data['userId']}, {'$set': data})
-#     model = genai.GenerativeModel(
-#     model_name="gemini-1.5-pro",
-#     generation_config=generation_config,
-#     )
-#     current_date = data['currentDate']
-#     chat_session = model.start_chat(history=[])
-#     prompt = f"""
-# 	User Inputs:
-#     I previously asked you this:
-#     {user}
-#     For this question, you answered:
-#     {model}
-# 	Current Year of Engineering: {data['currentYear']}
-# 	Desired Job Role: {data['jobRole']}
-# 	Preferred Industry: {data['industry']}
-#     Technology Interests: {data['techInterests']}
-# 	Career Aspirations: {data['aspirations']}
-#     Academic Background:
-#     Field of study: {data['curFieldOfStudy']}
-#     GPA: {data['gpa']}
-#     Academic achievements: {data['achievements']}
-#     Coursework:
-#     Relevant courses: {data['coursework']}
-#     Projects: {data['projects']}
-#     Time of Campus Placement: {data['placementTime']}
-#     Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
-#     Length of Each Study Session: {data['studyDuration']}
-# 	Current Date: {data['currentDate']}
-# 	User's current state and wishes: {data['academicSituation']}
+@app.route('/change_roadmap', methods=['POST'])
+def change_roadmap():
+    data = request.json
+    roadmaps = db.roadmaps
+    userData = db.userData
+    userData.update_one({'userId': data['userId']}, {'$set': data})
+    model = genai.GenerativeModel(
+    model_name="gemini-1.5-pro",
+    generation_config=generation_config,
+    )
+    current_date = data['currentDate']
+    chat_session = model.start_chat(history=[])
+    prompt = f"""
+	User Inputs:
+    I previously asked you this:
+    {userResp}
+    For this question, you answered:
+    {modelResp}
+	Current Year of Engineering: {data['currentYear']}
+	Desired Job Role: {data['jobRole']}
+	Preferred Industry: {data['industry']}
+    Technology Interests: {data['techInterests']}
+	Career Aspirations: {data['aspirations']}
+    Academic Background:
+    Field of study: {data['curFieldOfStudy']}
+    GPA: {data['gpa']}
+    Academic achievements: {data['achievements']}
+    Coursework:
+    Relevant courses: {data['coursework']}
+    Projects: {data['projects']}
+    Time of Campus Placement: {data['placementTime']}
+    Brief Description of Previous Experience and Knowledge: {data['prevExperience']}
+    Length of Each Study Session: {data['studyDuration']}
+	Current Date: {data['currentDate']}
+	User's current state and wishes: {data['academicSituation']}
 	
-# 	The user has now changed his career goals and preferences. Take into account the above changes and the User's current state and wishes and suggest a new roadmap to follow this. This time it is not necessary that the user wants to pursue a tech role. There may be cases where the user may have come across new career opportunities and want to pursue a non-tech role so accordingly suggest a career path based on the user's wishes and new set of inputs. If the user has opted for non-tech roles then there may not be a need to add the project section in each module so remove that from the output. If the role is a tech role then keep the output format as is. Make sure that the output only contains the new roadmap in json and nothing else.
-# 	"""
-#     response = chat_session.send_message(prompt)
-#     try:
-#         # Remove the "```json" and "```" markers from the response text
-#         cleaned_response_text = response.text.strip().strip("```json").strip("```")
+	The user has now changed his career goals and preferences. Take into account the above changes and the User's current state and wishes and suggest a new roadmap to follow this. This time it is not necessary that the user wants to pursue a tech role. There may be cases where the user may have come across new career opportunities and want to pursue a non-tech role so accordingly suggest a career path based on the user's wishes and new set of inputs. If the user has opted for non-tech roles then there may not be a need to add the project section in each module so remove that from the output. If the role is a tech role then keep the output format as is. Make sure that the output only contains the new roadmap in json and nothing else.
+	"""
+    response = chat_session.send_message(prompt)
+    try:
+        # Remove the "```json" and "```" markers from the response text
+        cleaned_response_text = response.text.strip().strip("```json").strip("```")
         
-#         # Parse the cleaned response text to a JSON object
-#         roadmap_json = json.loads(cleaned_response_text)
+        # Parse the cleaned response text to a JSON object
+        roadmap_json = json.loads(cleaned_response_text)
         
-#         # Insert the JSON object into the 'roadmaps' collection
-#         roadmaps.update_one({'userId': data['userId']}, {'$set': {'roadmap': roadmap_json}})     
-#         mentors=db.mentors
-#         mentors.delete_one({'studentId': data['userId']})  
-#         videos=db.videos
-#         videos.delete_one({'userId': data['userId']})
-#         return jsonify({'response': roadmap_json, 'message': 'Roadmap generated and changed successfully'}), 200
-#     except json.JSONDecodeError:
-#         return jsonify({'message': 'Failed to decode JSON from response'}), 500
-#     except Exception as e:
-#         return jsonify({'message': str(e)}), 500
+        # Insert the JSON object into the 'roadmaps' collection
+        roadmaps.update_one({'userId': data['userId']}, {'$set': {'roadmap': roadmap_json}})     
+        mentors=db.mentors
+        mentors.delete_one({'studentId': data['userId']})  
+        videos=db.videos
+        videos.delete_many({'userId': data['userId']})
+        return jsonify({'response': roadmap_json, 'message': 'Roadmap generated and changed successfully'}), 200
+    except json.JSONDecodeError:
+        return jsonify({'message': 'Failed to decode JSON from response'}), 500
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
     
 @app.route('/get_roadmap/<string:user_id>', methods=['GET'])
 def get_roadmap_data(user_id):
@@ -696,6 +699,95 @@ def get_vids(moduleId, userId, subtopicIndex):
         return jsonify({'subtopics': subtopics, 'moduleMain': moduleMain}), 200
     return jsonify({'message': 'No subtopic found'}), 404
 
+@app.route('/get_quiz', methods=['POST'])
+def get_quiz():
+    data = request.json
+    moduleId = data['moduleId']
+    userId = data['userId']
+    videos = db.videos
+    mods = videos.find_one({'_id': ObjectId(moduleId)})
+    module = mods['module']
+    subtopics = mods['subtopics']
+
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-pro",
+        generation_config=generation_config,
+    )
+    chat_session = model.start_chat(history=[])
+    prompt = f"""
+    I have completed the course of {module} which had the following subtopics {subtopics}. 
+    I want you to generate a quiz for this course so that I can strengthen my understanding of the topic. 
+    The number of questions should be 20 with increasing difficulty of the questions and they should be mcq type questions. 
+    Also keep in mind that you don't give basic questions. 
+    They are for an engineering student studying these topics so give questions accordingly.
+
+    The quiz should be given to me in the following json format:
+
+    {{
+        "questions": [
+            {{
+                "question": "question 1 for the quiz",
+                "option_a": "potential answer a",
+                "option_b": "potential answer a",
+                "option_c": "potential answer a",
+                "option_d": "potential answer a",
+                "correct_answer": "a, b, c or d"
+            }},
+            {{
+                "question": "question 2 for the quiz",
+                "option_a": "potential answer a",
+                "option_b": "potential answer a",
+                "option_c": "potential answer a",
+                "option_d": "potential answer a",
+                "correct_answer": "a, b, c or d"
+            }},
+            ...
+        ]
+    }}
+    Make sure that the output contains only this json object
+    """
+
+    response = chat_session.send_message(prompt)
+
+    try:
+        # Remove the "```json" and "```" markers from the response text
+        cleaned_response_text = response.text.strip().strip("```json").strip("```")
+
+        # Parse the cleaned response text to a JSON object
+        quiz_json = json.loads(cleaned_response_text)
+
+        # Insert the JSON object into the 'tests' collection
+        tests = db.tests
+
+        # Check if a quiz for this user and module already exists
+        existing_quiz = tests.find_one({'moduleId': moduleId, 'userId': userId})
+        if existing_quiz:
+            return jsonify({'response': existing_quiz['quiz'], 'message': 'Quiz already exists'}), 200
+
+        tests.insert_one({'moduleId': moduleId, 'quiz': quiz_json, 'userId': userId, 'score': 0})
+
+        return jsonify({'response': quiz_json, 'message': 'Quiz generated successfully'}), 200
+    except json.JSONDecodeError:
+        return jsonify({'message': 'Failed to decode JSON from response'}), 500
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+
+@app.route('/submit_quiz', methods=['POST'])
+def submit_quiz():
+    score = 0
+    data = request.json
+    moduleId = data['moduleId']
+    userId = data['userId']
+    answers = data['answers']
+    tests = db.tests
+    test = tests.find_one({'moduleId': moduleId, 'userId': userId})
+    correct_answers = test['quiz']['questions']
+    for index, i in enumerate(correct_answers):
+        if i['correct_answer'] == answers[index]:
+            score += 1
+    tests.update_one({'moduleId': moduleId, 'userId': userId}, {'$set': {'score': score}})
+    return jsonify({'message': 'Quiz submitted successfully', 'score': score}), 200
 
 @app.route('/complete_subtopic', methods=['POST'])
 def complete_subtopic():

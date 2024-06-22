@@ -31,6 +31,7 @@ import Subtopics from "./components/Subtopics.jsx";
 import VideoPage from "./components/VideoPage.jsx";
 import Account1 from "./components/Account1.jsx";
 import ChangeQuestions from "./components/ChangeQuestions.jsx";
+import Quiz from "./components/Quiz.jsx";
 // import Account from './components/Account.jsx'
 
 const router = createBrowserRouter(
@@ -95,6 +96,12 @@ const router = createBrowserRouter(
             </div>
           }
         />
+
+        <Route path="/quiz">
+          <Route index element={<Quiz />} />
+          <Route path=":moduleId" element={<Quiz />} />
+        </Route>
+
         <Route path="courses">
           <Route index element={<Courses />} />
           <Route path=":moduleId">
