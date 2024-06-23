@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import ThumbsUp from "../assets/thumbs-up.png";
@@ -50,7 +49,7 @@ function ForumPage() {
     setIsLiked(response.data.isLiked);
     setCommunityData(response.data.communityData);
     setTopRecommendations(response.data.top_recommendations); 
-    console.log(response.data.top_recommendations)
+    console.log(response.data.top_recommendations);
   };
 
   const handleAskDoubt = async () => {
@@ -77,7 +76,7 @@ function ForumPage() {
     event.preventDefault();
     try {
       const response = await axios.delete(
-        'http://127.0.0.1:5000/delete_comment/${doubtId}'
+        `http://127.0.0.1:5000/delete_comment/${doubtId}`
       );
       if (response.status === 200) {
         fetchDoubts();
@@ -145,7 +144,9 @@ function ForumPage() {
           New Post
         </button>
       </div>
-      <h3 className="text-purple1 text-xl font-mont font-bold mt-4">Recommendations for you</h3>
+      <h3 className="text-purple1 text-xl font-mont font-bold mt-4">
+        Recommendations for you
+      </h3>
       <div className="flex flex-col mt-3 mb-4">
         {topRecommendations.map((top, index) => (
           <Link
@@ -167,9 +168,9 @@ function ForumPage() {
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       className="lucide lucide-ellipsis-vertical"
                     >
                       <circle cx="12" cy="12" r="1" />
@@ -178,10 +179,7 @@ function ForumPage() {
                     </svg>
                   </button>
                 </DropdownTrigger>
-                <DropdownMenu
-                  aria-label="Action event example"
-                  onAction={(key) => alert(key)}
-                >
+                <DropdownMenu aria-label="Action event example">
                   <DropdownItem
                     onClick={(event) => handleDeleteDoubt(event, top._id)}
                     key="delete"
@@ -234,53 +232,24 @@ function ForumPage() {
                       className="lucide lucide-thumbs-up h-5 w-5"
                     >
                       <path d="M7 10v12" />
-                      <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+                      <path d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
                     </svg>
                   )}
                 </button>
-
-                <div className="flex ml-[-0.6rem] h-7 w-7 p-1 justify-center items-center text-xs font-pop">
-                  {top.likes}
-                </div>
-              </div>
-
-              <div className="flex items-center ml-2">
-                <div
-                  onClick={() =>
-                    navigate(/forum/${communityData._id}/${top._id})
-                  }
-                  className="h-7 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    className="lucide lucide-message-square-text h-5 w-5"
-                  >
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    <path d="M13 8H7" />
-                    <path d="M17 12H7" />
-                  </svg>
-
-                  <p className="text-sm font-pop ml-1">View Replies</p>
-                </div>
+                <p className="text-gray-700 text-sm font-semibold ml-1">
+                  {top.likeCount}
+                </p>
               </div>
             </div>
           </Link>
         ))}
       </div>
-      <h3 className="text-purple1 text-xl font-mont font-bold">Explore all</h3>
 
+      <h3 className="text-purple1 text-xl font-mont font-bold">All Posts</h3>
       <div className="flex flex-col mt-3">
         {doubts.map((doubt, index) => (
           <Link
-            onClick={() => navigate(/forum/${communityData._id}/${doubt._id})}
+            onClick={() => navigate(`/forum/${communityData._id}/${doubt._id}`)}
             className="bg-gray-100 shadow-md mb-4 rounded-xl p-3 flex flex-col items-start relative hover:scale-105 transition-all cursor-pointer"
             key={doubt._id}
           >
@@ -298,9 +267,9 @@ function ForumPage() {
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       className="lucide lucide-ellipsis-vertical"
                     >
                       <circle cx="12" cy="12" r="1" />
@@ -309,10 +278,7 @@ function ForumPage() {
                     </svg>
                   </button>
                 </DropdownTrigger>
-                <DropdownMenu
-                  aria-label="Action event example"
-                  onAction={(key) => alert(key)}
-                >
+                <DropdownMenu aria-label="Action event example">
                   <DropdownItem
                     onClick={(event) => handleDeleteDoubt(event, doubt._id)}
                     key="delete"
@@ -338,7 +304,6 @@ function ForumPage() {
             <p className="max-w-full truncate text-sm text-gray-700">
               {doubt.commentContent}
             </p>
-
             <div className="flex items-end">
               <div className="flex items-center mt-2">
                 <button
@@ -365,108 +330,52 @@ function ForumPage() {
                       className="lucide lucide-thumbs-up h-5 w-5"
                     >
                       <path d="M7 10v12" />
-                      <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+                      <path d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
                     </svg>
                   )}
                 </button>
-
-                <div className="flex ml-[-0.6rem] h-7 w-7 p-1 justify-center items-center text-xs font-pop">
-                  {doubt.likes}
-                </div>
-              </div>
-
-              <div className="flex items-center ml-2">
-                <div
-                  onClick={() =>
-                    navigate(/forum/${communityData._id}/${doubt._id})
-                  }
-                  className="h-7 p-1 flex justify-center items-center rounded-xl hover:bg-gray-400"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    className="lucide lucide-message-square-text h-5 w-5"
-                  >
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    <path d="M13 8H7" />
-                    <path d="M17 12H7" />
-                  </svg>
-
-                  <p className="text-sm font-pop ml-1">View Replies</p>
-                </div>
+                <p className="text-gray-700 text-sm font-semibold ml-1">
+                  {doubt.likeCount}
+                </p>
               </div>
             </div>
           </Link>
         ))}
       </div>
-      <Modal
-        backdrop="blur"
-        className="font-mont"
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-      >
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center">
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 text-center font-bold">
-                Ask Your Doubt
+              <ModalHeader className="flex flex-col gap-1">
+                Add a Post
               </ModalHeader>
-              <ModalBody className="flex flex-col space-y-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Title of Your Doubt
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="What is your doubt about?"
-                    className="mt-1 block w-full py-2 px-3 border-2 bg-white border-gray-200 rounded-xl shadow-sm hover:border-gray-400 focus:ring-gray-900 focus:border-gray-900 sm:text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Doubt Description
-                  </label>
-                  <Textarea
-                    id="description"
-                    minRows={6}
-                    maxRows={10}
-                    variant="bordered"
-                    className="mt-1 block w-full bg-white rounded-xl sm:text-sm"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    type="text"
-                    placeholder="Describe your doubt in detail"
-                    required
-                  />
-                </div>
+              <ModalBody>
+                <Textarea
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="mb-4"
+                />
+                <Textarea
+                  placeholder="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="mb-4"
+                />
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
                   Close
                 </Button>
                 <Button
-                  color="primary"
-                  onClick={(event) => handleAskDoubt(event)}
-                  onPress={onClose}
+                  color="secondary"
+                  onPress={() => {
+                    handleAskDoubt();
+                    onClose();
+                  }}
                 >
-                  Ask
+                  Post
                 </Button>
               </ModalFooter>
             </>

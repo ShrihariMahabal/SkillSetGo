@@ -390,36 +390,65 @@ def mentor(user_id):
     print(recommended_mentors_json)
     return jsonify(recommended_mentors_json)
 
+def predictions(subtopic_times, difficulty_levels):
+   
+    data = pd.read_csv('Final_dataset_with_actual_time (1) (1).csv')
 
-@app.route('/get_schedule/<string:user_id>', methods=['GET'])
-def schedule(user_id):
-    video_data = db.videos
-    roadmap=db.roadmaps
-    roadmap_data = roadmap.find_one({'userId': user_id})
-    data1=roadmap_data['roadmap']['roadmap'][0]['module']
+    X = data[['difficulty_level', 'duration_minutes']].values
+    y = data['actual_time'].values
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    print(f'Mean Absolute Error: {mae:.2f}')
+    print(f'R-squared: {r2:.2f}')
+
+    predicted_times = []
+    for subtopic_time, difficulty_level in zip(subtopic_times, difficulty_levels):
+        predicted_time = model.predict([[difficulty_level, subtopic_time]])
+        predicted_times.append(predicted_time[0])
+
+    return predicted_times
 
 
-    user_videos = list(video_data.find({'userId': user_id}).sort('progress', 1))
-    previous_progress = 1
-    data = {}
-    for video in user_videos:
-        if previous_progress == 1 and video['progress'] == 0:
-            video['_id'] = str(video['_id'])
-            data = video
-            break  
-        previous_progress = video['progress']
-    subtopic_data_diff=[]
-    subtopic_data=[]
-    weeks_duration=0
-    for i in range(len(roadmap_data['roadmap']['roadmap'])):
-        if roadmap_data['roadmap']['roadmap'][i]['module']==data['module']:
-            data2=roadmap_data['roadmap']['roadmap'][i]['subtopics']
-            weeks_duration=roadmap_data['roadmap']['roadmap'][i]['duration_weeks']
-            for i in range(len(data2)):
-                subtopic_data.append(data2[i]['subtopic'])
-                subtopic_data_diff.append(data2[i]['difficulty_level'])
-    video_data_dur=video_data.find({'module':data['module']})
-    print(video_data_dur[0]['video_data'])
+# @app.route('/get_schedule/<string:user_id>', methods=['GET'])
+# def schedule(user_id):
+#     video_data = db.videos
+#     roadmap=db.roadmaps
+#     roadmap_data = roadmap.find_one({'userId': user_id})
+#     data1=roadmap_data['roadmap']['roadmap'][0]['module']
+
+
+#     user_videos = list(video_data.find({'userId': user_id}).sort('progress', 1))
+#     previous_progress = 1
+#     data = {}
+#     for video in user_videos:
+#         if previous_progress == 1 and video['progress'] == 0:
+#             video['_id'] = str(video['_id'])
+#             data = video
+#             break  
+#         previous_progress = video['progress']
+#     subtopic_data_diff=[]
+#     subtopic_data=[]
+#     weeks_duration=0
+#     for i in range(len(roadmap_data['roadmap']['roadmap'])):
+#         if roadmap_data['roadmap']['roadmap'][i]['module']==data['module']:
+#             data2=roadmap_data['roadmap']['roadmap'][i]['subtopics']
+#             weeks_duration=roadmap_data['roadmap']['roadmap'][i]['duration_weeks']
+#             for i in range(len(data2)):
+#                 subtopic_data.append(data2[i]['subtopic'])
+#                 subtopic_data_diff.append(data2[i]['difficulty_level'])
+#     video_data_dur=video_data.find({'module':data['module']})
+#     print(video_data_dur[0]['video_data'])
     
     duration=[]
     for i in range(len(video_data_dur[0]['video_data'])):
@@ -455,11 +484,45 @@ def assign_mentor():
         'message': 'Mentor assigned successfully'
     }), 200
 
-# @app.route('/get_rating', methods=['GET'])
+# @app.route('/get_rating', methods=['POST'])
 # def rating():
+#     dataa = request.json
+#     userId = dataa['userId'] 
+#     tests = db.tests
+#     users = db.users
+#     videos = db.videos
+#     roadmaps = db.roadmaps
+#     user_test = tests.find_one({'userId': userId})
+#     userData = db.userData
+#     prev_rating = userData.find_one({'userId': userId})['rating']
+#     test_score = user_test['score']
+#     moduleID = user_test['moduleId']
+#     user_test1 = videos.find_one({'_id': ObjectId(moduleID)})
+#     roadmap = roadmaps.find_one({'userId': userId})
+#     subtopic = roadmap['roadmap']['roadmap']
+#     subtopic_diff = []
 
-    
+#     for i in range(len(subtopic)):
+#         if subtopic[i]['module'] == user_test1['module']:
+#             subtopics = subtopic[i]['subtopics']
+#             for subtopic in subtopics:
+#                 subtopic_diff.append(subtopic['difficulty_level'])
 
+#     test_score = (test_score / 20) * 100
+
+#     if prev_rating == 0:
+#         new_rating = 0.7 * test_score + 0.3 * ((sum(subtopic_diff) / len(subtopic_diff)) * 10)
+#     else:
+#         new_rating = 0.3 * prev_rating + 0.5 * test_score + 0.2 * ((sum(subtopic_diff) / len(subtopic_diff)) * 10)
+#     userData.update_one({'userId': userId}, {'$set': {'rating': new_rating}})
+
+#     return jsonify({'new_rating': new_rating})
+
+# @app.route('/extract_rating/<string:userId>', methods=['GET'])
+# def extract_rating(userId):
+#     userData = db.userData
+#     rating = userData.find_one({'userId': userId})['rating']
+#     return jsonify({'rating': rating})
 
 @app.route('/get_mentor/<string:userId>', methods=['GET'])
 def get_mentor_data(userId):
@@ -792,16 +855,6 @@ def add_todo():
     todos.insert_one(data)
     return jsonify({"message":"Todo added successfully"})
 
-@app.route('/account/<string:user_id>',methods = ['GET'])
-def account_info(user_id):
-    accountInfo=db.userData
-    account = accountInfo.find_one({'userId': user_id})
-    if account:
-        print(account)
-        account['_id'] = str(account['_id'])
-        return jsonify({'Account': account}), 200
-    
-    return jsonify({'message': 'No acount data found'}), 404
 
 #videos part
 api_key = "AIzaSyADMU6l1-W3zUyS2NkTlZeppiPJ8A82zJ0"
@@ -1037,14 +1090,29 @@ def submit_quiz():
     moduleId = data['moduleId']
     userId = data['userId']
     answers = data['answers']
+    
     tests = db.tests
     test = tests.find_one({'moduleId': moduleId, 'userId': userId})
     correct_answers = test['quiz']['questions']
-    for index, i in enumerate(correct_answers):
-        if i['correct_answer'] == answers[index]:
+    
+    # Logging for debugging
+    print("User Answers:", answers)
+    print("Correct Answers:", [q['correct_answer'] for q in correct_answers])
+    
+    for index, question in enumerate(correct_answers):
+        correct_answer = question['correct_answer'].strip().lower()
+        user_answer = answers[index].strip().lower()
+        
+        # Log each comparison
+        print(f"Comparing: Correct Answer: {correct_answer}, User Answer: {user_answer}")
+        
+        if correct_answer == user_answer:
             score += 1
+    
     tests.update_one({'moduleId': moduleId, 'userId': userId}, {'$set': {'score': score}})
+    
     return jsonify({'message': 'Quiz submitted successfully', 'score': score}), 200
+
 
 @app.route('/complete_subtopic', methods=['POST'])
 def complete_subtopic():
@@ -1074,6 +1142,131 @@ def not_complete_subtopic():
     })
     return jsonify({'message': 'Subtopic not completed successfully'}), 200
 
+@app.route('/get_schedule/<string:user_id>', methods=['GET'])
+def schedule(user_id):
+    video_data = db.videos
+    roadmap=db.roadmaps
+    roadmap_data = roadmap.find_one({'userId': user_id})
+    data1=roadmap_data['roadmap']['roadmap'][0]['module']
+    print(data1)
+    user_videos = list(video_data.find({'userId': user_id}).sort('progress', 1))
+    print(user_videos)
+    previous_progress = 1
+    data = {}
+    for video in user_videos:
+        if previous_progress == 1 and video['progress'] == 0:
+            video['_id'] = str(video['_id'])
+            data = video
+            break  
+        previous_progress = video['progress']
+    print(data)
+    subtopic_data_diff=[]
+    subtopic_data=[]
+    weeks_duration=0
+    for i in range(len(roadmap_data['roadmap']['roadmap'])):
+        if roadmap_data['roadmap']['roadmap'][i]['module']==data1:
+            data2=roadmap_data['roadmap']['roadmap'][i]['subtopics']
+            weeks_duration=roadmap_data['roadmap']['roadmap'][i]['duration_weeks']
+            for i in range(len(data2)):
+                subtopic_data.append(data2[i]['subtopic'])
+                subtopic_data_diff.append(data2[i]['difficulty_level'])
+    video_data_dur=video_data.find({'module':data['module']})
+    print(video_data_dur[0]['video_data'])
+    
+    duration=[]
+    for i in range(len(video_data_dur[0]['video_data'])):
+        duration.append(video_data_dur[0]['video_data'][i][3])
+    total_minutes = [int(h) * 60 + int(m) + int(s) / 60 for h, m, s in (time.split(':') for time in duration)]
+    prediction=predictions(total_minutes,subtopic_data_diff)
+    print(subtopic_data_diff)
+    print(weeks_duration)
+    print(subtopic_data)
+    print(total_minutes)
+    schedule, end_day = sch(['mon', 'wed', 'fri','sun'], weeks_duration, subtopic_data, total_minutes, 'wed')
+    actual_schedule = add_actual_dates('2024-06-23', ['mon', 'wed', 'fri', 'sun'], schedule)
+    actual_schedule = [[subtopic, duration, date] for subtopic, duration, day, date in actual_schedule]
+    print(actual_schedule)
+    return jsonify(actual_schedule)
+
+def sch(days_of_week, module_time, subtopics, subtopic_time, start_day):
+    print(len(days_of_week),module_time)
+    no_of_days = len(days_of_week) * module_time
+    print(no_of_days)
+    hours_day = sum(subtopic_time) / no_of_days
+    schedule = []
+    remaining_time = 0
+    t = days_of_week.index(start_day)
+    z = 0
+    for subtopic in subtopic_time:
+        t = t % len(days_of_week)
+        if t == 0:
+            schedule.append((subtopics[z], remaining_time / 60, days_of_week[-1]))
+        else:
+            schedule.append((subtopics[z], remaining_time / 60, days_of_week[t - 1]))
+
+        no_of_days_sub = (subtopic - remaining_time) / hours_day
+        extra_time = (subtopic - remaining_time) % hours_day
+        remaining_time = hours_day - extra_time
+        for i in range(math.ceil(no_of_days_sub) - 1):
+            schedule.append((subtopics[z], hours_day / 60, days_of_week[t]))
+            t = (t + 1) % len(days_of_week)
+        schedule.append((subtopics[z], extra_time / 60, days_of_week[t]))
+        t += 1
+        z += 1
+
+    return schedule[1:-1], days_of_week[t - 1]
+
+def add_actual_dates(start_date, days_of_week, schedule):
+    current_date = datetime.strptime(start_date, "%Y-%m-%d")
+    day_name_to_index = {day: i for i, day in enumerate(days_of_week)}
+
+    actual_schedule = []
+    last_date = None
+
+    for entry in schedule:
+        topic, hours, day_name = entry
+        target_weekday = day_name_to_index[day_name]
+        if last_date and last_date.weekday() == target_weekday:
+            current_date = last_date
+        else:
+            while current_date.weekday() != target_weekday:
+                current_date += timedelta(days=1)
+
+        actual_schedule.append((topic, hours, day_name, current_date.strftime("%Y-%m-%d")))
+        last_date = current_date
+        current_date += timedelta(days=1)
+
+    return actual_schedule
+
+
+def predictions(subtopic_times, difficulty_levels):
+   
+    data = pd.read_csv('Final_dataset_with_actual_time (1) (1).csv')
+
+    X = data[['difficulty_level', 'duration_minutes']].values
+    y = data['actual_time'].values
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    print(f'Mean Absolute Error: {mae:.2f}')
+    print(f'R-squared: {r2:.2f}')
+
+    predicted_times = []
+    for subtopic_time, difficulty_level in zip(subtopic_times, difficulty_levels):
+        predicted_time = model.predict([[difficulty_level, subtopic_time]])
+        predicted_times.append(predicted_time[0])
+
+    return predicted_times
 
 def scrape_indeed(job_title, location):
     # Initialize the WebDriver
@@ -1142,6 +1335,17 @@ def job_listing():
     internships=display_internships('Web Developer', 'Mumbai, Maharashtra')
     jobs=display_jobs('Web Developer', 'Mumbai, Maharashtra')
     return jsonify({'internships':internships,'jobs':jobs})
+
+@app.route('/account/<string:user_id>',methods = ['GET'])
+def account_info(user_id):
+    accountInfo=db.userData
+    account = accountInfo.find_one({'userId': user_id})
+    if account:
+        print(account)
+        account['_id'] = str(account['_id'])
+        return jsonify({'Account': account}), 200
+    
+    return jsonify({'message': 'No acount data found'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

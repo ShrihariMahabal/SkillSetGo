@@ -10,7 +10,7 @@ function Quiz() {
   const userId = JSON.parse(localStorage.getItem("user_creds"))._id;
   const [loading, setLoading] = useState(false);
   const [answers, setAnswers] = useState([]);
-  const [score, setScore] = useState(null); // State for score
+  const [score, setScore] = useState(null);
 
   const handleQuizSubmit = async () => {
     try {
@@ -21,6 +21,9 @@ function Quiz() {
       });
       console.log(response.data.message);
       setScore(response.data.score);
+      const response1 = await axios.post('http://127.0.0.1:5000/get_rating', {
+        userId: userId,
+      });
     } catch (error) {
       console.error(error);
     }
@@ -33,13 +36,13 @@ function Quiz() {
   const fetchQuiz = async () => {
     setLoading(true);
     try {
-      console.log("Fetching quiz..."); // Log fetching quiz
+      console.log("Fetching quiz...");
       const response = await axios.post(`http://127.0.0.1:5000/get_quiz`, {
         moduleId: moduleId,
         userId: userId,
       });
       setQuestions(response.data.response.questions);
-      setAnswers(new Array(response.data.response.questions.length).fill("")); // Initialize answers state with empty strings
+      setAnswers(new Array(response.data.response.questions.length).fill(""));
       console.log("Quiz fetched:", response.data.response.questions);
       setLoading(false);
     } catch (error) {

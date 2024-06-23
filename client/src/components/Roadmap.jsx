@@ -70,11 +70,11 @@ function Roadmap() {
       case 0:
         return "top-[15.5rem] left-[4rem] 2xl:top-[18.0rem] 2xl: left-[4.6rem]";
       case 1:
-        return "top-[8.6rem] left-[15.8rem] 2xl:top-[9.6rem] 2xl: left-[18.8rem]";
+        return "top-[8.6rem] left-[15.1rem] 2xl:top-[9.6rem] 2xl: left-[18.8rem]";
       case 2:
-        return "top-[1rem] left-[23.6rem] 2xl:top-[2.6rem] 2xl: left-[34.3rem]";
+        return "top-[1rem] left-[23.8rem] 2xl:top-[2.6rem] 2xl: left-[34.3rem]";
       case 3:
-        return "bottom-[12.5rem] left-[32.4rem] 2xl: bottom-[12.8rem] 2xl: left-[38.7rem]";
+        return "bottom-[12.5rem] left-[31.8rem] 2xl: bottom-[12.8rem] 2xl: left-[38.7rem]";
       case 4:
         return "top-[8rem] right-[9rem] 2xl:top-[9.0rem] 2xl: right-[10.0rem]";
       default:

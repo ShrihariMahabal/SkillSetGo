@@ -164,7 +164,7 @@ function Questions() {
       {
         gap && (
           <div className="fixed top-0 left-0 w-full min-h-full bg-white z-50 flex flex-col justify-center items-center">
-            <p className="font-mont text-sm max-w-[60%] font-semibold">{gap}</p>
+            <p className="font-mont text-sm max-w-[80%] font-semibold">{gap}</p>
           </div>
         )
       }

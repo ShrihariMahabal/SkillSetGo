@@ -26,7 +26,7 @@ function Nav() {
           </div>
         </Link>
 
-        <div className="flex flex-col items-center space-y-3 w-[100%]">
+        <div className="flex flex-col items-center space-y-3 w-[100%] mt-6">
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -87,7 +87,7 @@ function Nav() {
             <p className="text-sm font-pop">Mentor</p>
           </NavLink>
 
-          {/* <NavLink
+          <NavLink
             to="/jobs"
             className={({ isActive }) =>
               `text-white flex space-x-4 pl-[4%] py-2 w-[75%] rounded-lg justify-start items-center transition duration-100 ${
@@ -97,7 +97,7 @@ function Nav() {
           >
             <img className="h-5" src={Mentor} alt="" />
             <p className="text-sm font-pop">Jobs</p>
-          </NavLink> */}
+          </NavLink>
 
           <NavLink
             to="/forum"
@@ -111,8 +111,6 @@ function Nav() {
             <p className="text-sm font-pop">Forum</p>
           </NavLink>
 
-
-
           <NavLink
             to="/chatbot"
             className={({ isActive }) =>
@@ -124,19 +122,19 @@ function Nav() {
             <img className="h-5" src={Bot} alt="" />
             <p className="text-sm font-pop">Chatbot</p>
           </NavLink>
-        </div>
 
-        <NavLink
-          to="/account"
-          className={({ isActive }) =>
-            `text-white flex space-x-4 pl-[4%] py-2 w-[75%] rounded-lg justify-start items-center transition duration-100 ${
-              isActive ? "bg-gray-700" : "hover:bg-gray-700"
-            }`
-          }
-        >
-          <img className="h-5" src={User} alt="" />
-          <p className="text-sm font-pop">Account</p>
-        </NavLink>
+          <NavLink
+            to="/account"
+            className={({ isActive }) =>
+              `text-white flex space-x-4 pl-[4%] py-2 w-[75%] rounded-lg justify-start items-center transition duration-100 ${
+                isActive ? "bg-gray-700" : "hover:bg-gray-700"
+              }`
+            }
+          >
+            <img className="h-5" src={User} alt="" />
+            <p className="text-sm font-pop">Account</p>
+          </NavLink>
+        </div>
       </nav>
     </>
   );

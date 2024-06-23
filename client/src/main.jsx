@@ -42,7 +42,10 @@ const router = createBrowserRouter(
       <Route path="/register" element={<Register />} />
       <Route path="/questions" element={<Questions />} />
       <Route path="/changeQuestions" element={<ChangeQuestions />} />
-      <Route path="/jobs" element={
+      <Route path="/" element={<Layout />}>
+        <Route path="" element={<Home />} />
+        <Route path="chatbot" element={<Chatbot />} />
+        <Route path="account" element={
             <div
               style={{
                 height: "100vh",
@@ -52,13 +55,26 @@ const router = createBrowserRouter(
                 background: "white",
               }}
             >
-              <Jobs />
+              <Account1 />
             </div>
-          } />
-      <Route path="/" element={<Layout />}>
-        <Route path="" element={<Home />} />
-        <Route path="chatbot" element={<Chatbot />} />
-        <Route path="account" element={<Account1 />} />
+          }
+        />
+        <Route
+        path="/jobs"
+        element={
+          <div
+            style={{
+              height: "100vh",
+              width: "80%",
+              marginLeft: "20%",
+              padding: "1.25rem",
+              background: "white",
+            }}
+          >
+            <Jobs />
+          </div>
+        }
+      />
         <Route
           path="calendar"
           element={
@@ -120,7 +136,7 @@ const router = createBrowserRouter(
           <Route index element={<Courses />} />
           <Route path=":moduleId">
             <Route index element={<Subtopics />} />
-            <Route path=':subtopicIndex' element={<VideoPage/>} />
+            <Route path=":subtopicIndex" element={<VideoPage />} />
           </Route>
         </Route>
         {/* <Route path='account' element={<div style={{height: "100vh", width:"80%", marginLeft:"20%", padding:"1.25rem", background:"#"}}><Account/></div>}/> */}
