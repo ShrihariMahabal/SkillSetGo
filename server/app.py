@@ -919,7 +919,8 @@ def main():
     userId = data['userId']
     module = data['module']
     subtopics = data['subtopics']
-
+def check_test():
+    return
     # Check if videos for this module and user already exist
     existing_videos = db.videos.find_one({'userId': userId, 'module': module})
     if existing_videos:
