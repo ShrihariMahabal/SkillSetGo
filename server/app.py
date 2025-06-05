@@ -919,8 +919,7 @@ def main():
     userId = data['userId']
     module = data['module']
     subtopics = data['subtopics']
-def check_test():
-    return
+
     # Check if videos for this module and user already exist
     existing_videos = db.videos.find_one({'userId': userId, 'module': module})
     if existing_videos:
@@ -1188,6 +1187,31 @@ def schedule(user_id):
     actual_schedule = [[subtopic, duration, date] for subtopic, duration, day, date in actual_schedule]
     print(actual_schedule)
     return jsonify(actual_schedule)
+def get_job_data(job_role: str, city: str) -> list[dict]:
+    """
+    Generate dummy job data for testing and static analysis validation.
+
+    Args:
+        job_role (str): The job title or role to simulate.
+        city (str): The city where the job is located.
+
+    Returns:
+        list[dict]: A list of dictionaries containing dummy job entries.
+    """
+    if not job_role or not city:
+        raise ValueError("Job role and city must not be empty.")
+
+    job_jobs = []
+    for i in range(5):
+        job = {
+            "title": f"{job_role} {i+1}",
+            "company": f"Company {chr(65 + i)}",
+            "location": city,
+            "link": f"https://example.com/job/{i+1}"
+        }
+        job_jobs.append(job)
+
+    return job_jobs
 
 def sch(days_of_week, module_time, subtopics, subtopic_time, start_day):
     print(len(days_of_week),module_time)
